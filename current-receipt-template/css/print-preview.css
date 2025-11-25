@@ -1,14 +1,47 @@
 /* Print Receipt Preview Styles - Thermal Printer Style */
 
+/* B612 Mono Font Face Declarations */
+@font-face {
+    font-family: 'B612 Mono';
+    src: url('../fonts/assets/B612Mono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'B612 Mono';
+    src: url('../fonts/assets/B612Mono-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'B612 Mono';
+    src: url('../fonts/assets/B612Mono-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'B612 Mono';
+    src: url('../fonts/assets/B612Mono-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
 .preview-receipt {
-    /* Monospace font stack for thermal printer-like appearance */
-    font-family: 'Courier New', 'Courier', 'Consolas', 'Monaco', 'Lucida Console', monospace;
+    /* B612 Mono font stack for thermal printer-like appearance */
+    font-family: 'B612 Mono', 'Courier New', 'Courier', 'Consolas', 'Monaco', 'Lucida Console', monospace;
     font-size: 12px;
     line-height: 1.2;
     color: #000;
     background-color: #fff;
     width: 80mm;
-    padding: 40px 15px 30px 15px;
+    padding: 20px 15px 30px 15px; /* Top padding: 22px reduced by 10% = 19.8px ≈ 20px */
     margin: 0 auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     
@@ -28,6 +61,16 @@
 .preview-receipt[data-format="3inch"] {
     width: 80mm;
     font-size: 14px;
+}
+
+/* Increase top padding when placeholder block is hidden */
+.preview-receipt:not(:has(.receipt-placeholder-block)) {
+    padding-top: 24px; /* 20px increased by 20% = 24px */
+}
+
+/* Fallback for browsers that don't support :has() */
+.preview-receipt.no-placeholder {
+    padding-top: 24px; /* 20px increased by 20% = 24px */
 }
 
 /* Font sizes */
@@ -72,6 +115,17 @@
     word-wrap: break-word;
 }
 
+.receipt-footer-message {
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+}
+
 .receipt-separator {
     margin: 8px 0;
     border-top: 1px dashed #000;
@@ -83,15 +137,58 @@
     height: 8px;
 }
 
+.receipt-placeholder-block {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.placeholder-box {
+    background: #f5f5f5;
+    border: 2px dashed #ccc;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-sizing: border-box;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.placeholder-text {
+    color: #999;
+    font-size: 10px;
+    text-align: center;
+}
+
 .receipt-bill-date-row {
     margin: 8px 0;
     font-size: 0.9em;
+}
+
+.customer-info {
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 12.6px;
 }
 
 .receipt-bill-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-top: 10px;
+    border-top: 1px dashed #000;
 }
 
 .receipt-date-time-row {
@@ -146,6 +243,12 @@
     flex-direction: column;
     gap: 2px;
     align-items: flex-end;
+    margin: 8px 0;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    width: 100%;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .calculation-multiply {
@@ -256,9 +359,12 @@
 .total-row.total-final {
     font-weight: bold;
     font-size: 1.2em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin: 8px 0;
     border-top: 1px dashed #000;
-    padding-top: 6px;
-    margin-top: 8px;
+    border-bottom: 1px dashed #000;
+    width: 100%;
 }
 
 .receipt-qr-code {
@@ -329,6 +435,248 @@
     }
 }
 
+/* Side Control Panel Styles */
+.side-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.side-panel.collapsed {
+    transform: translateX(-100%);
+}
+
+.side-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.side-panel-header h1 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+    flex: 1;
+}
+
+.side-panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+.panel-toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    color: #666;
+    font-size: 24px;
+    line-height: 1;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.panel-toggle:hover {
+    background: #e0e0e0;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.side-panel-content {
+    padding: 20px;
+    flex: 1;
+}
+
+.control-section {
+    margin-bottom: 24px;
+}
+
+.control-section.toggle-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.control-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.control-section.toggle-section .control-label {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.control-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.control-select:hover {
+    border-color: #999;
+}
+
+.control-select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.format-switcher {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.format-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.format-btn:hover {
+    border-color: #999;
+    background: #f5f5f5;
+}
+
+.format-btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.format-btn.active:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
+.export-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+}
+
+.export-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+}
+
+.export-btn.export-png {
+    background: #2196F3;
+}
+
+.export-btn.export-png:hover {
+    background: #1976D2;
+}
+
+.export-btn.export-pdf {
+    background: #f44336;
+}
+
+.export-btn.export-pdf:hover {
+    background: #d32f2f;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #4CAF50;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.toggle-switch:hover .toggle-slider {
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
 /* Preview container styles */
 .preview-container {
     background: #f5f5f5;
@@ -336,5 +684,20 @@
     display: flex;
     justify-content: center;
     min-height: 100vh;
+}
+
+/* Responsive adjustments for side panel */
+@media (max-width: 768px) {
+    .side-panel {
+        width: 260px;
+    }
+    
+    .preview-container {
+        margin-left: 260px;
+    }
+    
+    .preview-container.panel-collapsed {
+        margin-left: 0;
+    }
 }
 

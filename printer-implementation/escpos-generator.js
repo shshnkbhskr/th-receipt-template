@@ -634,7 +634,7 @@ class ESCPOSGenerator {
     /**
      * Format time from ISO string
      * @param {string} dateString - ISO date string
-     * @returns {string} Formatted time (HH:MM)
+     * @returns {string} Formatted time (HH:MM:SS)
      */
     formatTime(dateString) {
         if (!dateString) return '';
@@ -642,7 +642,8 @@ class ESCPOSGenerator {
             const date = new Date(dateString);
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
         } catch (e) {
             return dateString;
         }

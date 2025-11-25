@@ -3,6 +3,10 @@
     "characterWidth": 32,
     "elements": [
       {
+        "height": 90,
+        "type": "placeholder_block"
+      },
+      {
         "alignment": "CENTER",
         "font_size": "NORMAL",
         "font_weight": "BOLD",
@@ -34,64 +38,23 @@
         "value": "Ph: ${phone_number}"
       },
       {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
-      },
-      {
         "type": "bill_date_row"
       },
       {
-        "alignment": "LEFT",
-        "font_size": "NORMAL",
-        "font_weight": "NORMAL",
-        "type": "text",
-        "value": "Customer: ${customer_name}"
-      },
-      {
-        "alignment": "LEFT",
-        "font_size": "NORMAL",
-        "font_weight": "NORMAL",
-        "type": "text",
-        "value": "Mobile No: ${customer_mobile}"
-      },
-      {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
+        "type": "customer_info_row"
       },
       {
         "type": "transaction_payment_row"
       },
       {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
-      },
-      {
         "type": "item_header_row"
-      },
-      {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
       },
       {
         "source": "items",
         "type": "bill_items"
       },
       {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
-      },
-      {
         "type": "total_amount_row"
-      },
-      {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
       },
       {
         "alignment": "CENTER",
@@ -111,28 +74,7 @@
         "value": "SCAN TO PAY"
       },
       {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
-      },
-      {
-        "alignment": "CENTER",
-        "font_size": "SMALL",
-        "font_weight": "NORMAL",
-        "type": "static_text",
-        "value": "Thank you for shopping with us!"
-      },
-      {
-        "alignment": "CENTER",
-        "font_size": "SMALL",
-        "font_weight": "NORMAL",
-        "type": "static_text",
-        "value": "Visit again"
-      },
-      {
-        "length": 32,
-        "style": "DASHED",
-        "type": "separator"
+        "type": "footer_message"
       },
       {
         "alignment": "CENTER",

@@ -15,20 +15,6 @@
             padding: 0;
             background-color: #f5f5f5;
         }
-        .preview-header {
-            background: white;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .preview-header h1 {
-            margin: 0 0 10px 0;
-            color: #333;
-        }
-        .preview-header p {
-            color: #666;
-            margin: 5px 0;
-        }
         .controls {
             display: flex;
             gap: 10px;
@@ -61,10 +47,20 @@
         button:hover {
             background: #45a049;
         }
+        .main-content {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
         .preview-container {
             display: flex;
             justify-content: center;
             padding: 20px;
+            flex: 1;
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+        }
+        .preview-container.panel-collapsed {
+            margin-left: 0;
         }
         .error {
             color: #d32f2f;
@@ -81,45 +77,158 @@
     </style>
 </head>
 <body>
-    <div class="preview-header">
-        <h1>Print Receipt Template Preview</h1>
-        <p>Preview receipt templates with sample data</p>
-        <div class="controls">
-            <div class="control-group">
-                <label>Template:</label>
-                <select id="template-select">
-                    <option value="templates/print_bill_2inch_template.json">Bill - 2 inch</option>
-                    <option value="templates/print_transaction_2inch_template.json">Transaction - 2 inch</option>
-                    <option value="templates/print_bill_3inch_template.json">Bill - 3 inch</option>
-                    <option value="templates/print_transaction_3inch_template.json" selected>Transaction - 3 inch</option>
-                </select>
+    <div class="main-content">
+        <!-- Side Control Panel -->
+        <div class="side-panel" id="side-panel">
+            <div class="side-panel-header">
+                <h1>Print Receipt Template Preview</h1>
+                <button class="panel-toggle" id="panel-toggle" onclick="togglePanel()" aria-label="Toggle panel">
+                    <span class="toggle-icon">‹</span>
+                </button>
             </div>
-            <div class="control-group">
-                <label>&nbsp;</label>
-                <button onclick="loadPreview()">Refresh Preview</button>
-            </div>
-            <div class="control-group">
-                <label>Export:</label>
-                <button onclick="exportToPNG()" style="background: #2196F3;">Export PNG</button>
-            </div>
-            <div class="control-group">
-                <label>&nbsp;</label>
-                <button onclick="exportToPDF()" style="background: #f44336;">Export PDF</button>
+            <div class="side-panel-content">
+                <div class="control-section">
+                    <label class="control-label">Export:</label>
+                    <div class="export-buttons">
+                        <button class="export-btn export-png" onclick="exportToPNG()">PNG</button>
+                        <button class="export-btn export-pdf" onclick="exportToPDF()">PDF</button>
+                    </div>
+                </div>
+                <div class="control-section">
+                    <label class="control-label">Template Type:</label>
+                    <select id="template-type-select" class="control-select">
+                        <option value="bill">Bill</option>
+                        <option value="transaction" selected>Transaction</option>
+                    </select>
+                </div>
+                <div class="control-section">
+                    <label class="control-label">Format:</label>
+                    <div class="format-switcher">
+                        <button class="format-btn" id="format-2inch" onclick="switchFormat('2inch')">2 inch</button>
+                        <button class="format-btn active" id="format-3inch" onclick="switchFormat('3inch')">3 inch</button>
+                    </div>
+                </div>
+                <div class="control-section">
+                    <label class="control-label">Tax Type:</label>
+                    <div class="format-switcher">
+                        <button class="format-btn active" id="tax-cgst-sgst" onclick="switchTaxType('cgst-sgst')">CGST/SGST</button>
+                        <button class="format-btn" id="tax-igst" onclick="switchTaxType('igst')">IGST</button>
+                    </div>
+                </div>
+                <div class="control-section toggle-section">
+                    <label class="control-label">Logo:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="logo-toggle" checked onchange="toggleLogo(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-section toggle-section">
+                    <label class="control-label">Cashier:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="cashier-toggle" checked onchange="toggleCashier(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="preview-container">
-        <div id="preview-content">
-            <div class="loading">Loading preview...</div>
+        <div class="preview-container" id="preview-container">
+            <div id="preview-content">
+                <div class="loading">Loading preview...</div>
+            </div>
         </div>
     </div>
 
     <script src="js/print-template-engine.js"></script>
     <script>
+        // Track current template type and format
+        let currentTemplateType = 'transaction'; // 'bill' or 'transaction'
+        let currentFormat = '3inch'; // '2inch' or '3inch'
+        let currentTaxType = 'cgst-sgst'; // 'cgst-sgst' or 'igst'
+        let showLogo = true; // Show or hide logo placeholder
+        let showCashier = true; // Show or hide cashier field
+        let originalCashierValue = null; // Store original cashier value
+
+        /**
+         * Get template path based on current type and format
+         */
+        function getTemplatePath() {
+            const type = currentTemplateType === 'bill' ? 'bill' : 'transaction';
+            const format = currentFormat === '2inch' ? '2inch' : '3inch';
+            return `templates/print_${type}_${format}_template.json`;
+        }
+
+        /**
+         * Toggle side panel visibility
+         */
+        function togglePanel() {
+            const panel = document.getElementById('side-panel');
+            const container = document.getElementById('preview-container');
+            const toggleIcon = document.querySelector('.toggle-icon');
+            
+            panel.classList.toggle('collapsed');
+            container.classList.toggle('panel-collapsed');
+            toggleIcon.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+        }
+
+        /**
+         * Switch format (2 inch / 3 inch)
+         */
+        function switchFormat(format) {
+            if (format === currentFormat) return;
+            
+            currentFormat = format;
+            
+            // Update button states
+            document.getElementById('format-2inch').classList.toggle('active', format === '2inch');
+            document.getElementById('format-3inch').classList.toggle('active', format === '3inch');
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Switch tax type (CGST/SGST or IGST)
+         */
+        function switchTaxType(taxType) {
+            if (taxType === currentTaxType) return;
+            
+            currentTaxType = taxType;
+            
+            // Update button states
+            document.getElementById('tax-cgst-sgst').classList.toggle('active', taxType === 'cgst-sgst');
+            document.getElementById('tax-igst').classList.toggle('active', taxType === 'igst');
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Toggle logo placeholder visibility
+         */
+        function toggleLogo(show) {
+            if (show === showLogo) return;
+            
+            showLogo = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Toggle cashier field visibility
+         */
+        function toggleCashier(show) {
+            if (show === showCashier) return;
+            
+            showCashier = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
         async function loadPreview() {
             const previewContent = document.getElementById('preview-content');
-            const templateSelect = document.getElementById('template-select');
-            const selectedTemplate = templateSelect.value;
+            const selectedTemplate = getTemplatePath();
             
             previewContent.innerHTML = '<div class="loading">Loading preview...</div>';
             
@@ -138,7 +247,7 @@
                 if (!templateResponse.ok) {
                     throw new Error(`Failed to load template: ${templateResponse.statusText}`);
                 }
-                const template = await templateResponse.json();
+                let template = await templateResponse.json();
                 
                 // Load sample data (with cache-busting to ensure fresh data)
                 let sampleData;
@@ -156,13 +265,74 @@
                     if (dataResponse.ok) {
                         sampleData = await dataResponse.json();
                         console.log('Data loaded successfully:', sampleData);
+                        // Store original cashier value on first load
+                        if (originalCashierValue === null && sampleData.cashier && sampleData.cashier !== 'N/A') {
+                            originalCashierValue = sampleData.cashier;
+                        }
                     } else {
                         console.warn('Failed to load data, using default');
                         sampleData = PrintTemplateEngine.getDefaultSampleData();
+                        if (originalCashierValue === null && sampleData.cashier && sampleData.cashier !== 'N/A') {
+                            originalCashierValue = sampleData.cashier;
+                        }
                     }
                 } catch (e) {
                     console.error('Error loading data:', e);
                     sampleData = PrintTemplateEngine.getDefaultSampleData();
+                    if (originalCashierValue === null && sampleData.cashier && sampleData.cashier !== 'N/A') {
+                        originalCashierValue = sampleData.cashier;
+                    }
+                }
+                
+                // Filter tax data based on selected tax type
+                if (sampleData.tax) {
+                    const taxData = { ...sampleData.tax };
+                    if (currentTaxType === 'cgst-sgst') {
+                        // Show CGST/SGST, hide IGST
+                        taxData.igst = { rate: taxData.igst?.rate || 0, amount: 0 };
+                    } else {
+                        // Show IGST, calculate amount from CGST + SGST if IGST amount is 0
+                        const cgstAmount = taxData.cgst?.amount || 0;
+                        const sgstAmount = taxData.sgst?.amount || 0;
+                        const igstAmount = taxData.igst?.amount || 0;
+                        
+                        // If IGST amount is 0, calculate it from CGST + SGST
+                        const calculatedIgstAmount = igstAmount > 0 ? igstAmount : (cgstAmount + sgstAmount);
+                        const igstRate = taxData.igst?.rate || ((taxData.cgst?.rate || 0) + (taxData.sgst?.rate || 0));
+                        
+                        taxData.igst = { rate: igstRate, amount: calculatedIgstAmount };
+                        taxData.cgst = { rate: taxData.cgst?.rate || 0, amount: 0 };
+                        taxData.sgst = { rate: taxData.sgst?.rate || 0, amount: 0 };
+                    }
+                    sampleData.tax = taxData;
+                }
+                
+                // Hide/show cashier field based on toggle
+                if (!showCashier) {
+                    // Store original value if not already stored
+                    if (originalCashierValue === null && sampleData.cashier && sampleData.cashier !== 'N/A') {
+                        originalCashierValue = sampleData.cashier;
+                    }
+                    sampleData.cashier = 'N/A';
+                } else {
+                    // Restore original value if available
+                    if (originalCashierValue !== null) {
+                        sampleData.cashier = originalCashierValue;
+                    }
+                }
+                
+                // Filter template elements based on logo visibility
+                if (!showLogo && template.receipt_template && template.receipt_template.elements) {
+                    // Create a copy of the template and filter out placeholder_block elements
+                    template = {
+                        ...template,
+                        receipt_template: {
+                            ...template.receipt_template,
+                            elements: template.receipt_template.elements.filter(
+                                element => element.type !== 'placeholder_block'
+                            )
+                        }
+                    };
                 }
                 
                 // Validate template
@@ -171,17 +341,11 @@
                     throw new Error('Template validation failed: ' + validation.errors.join(', '));
                 }
                 
-                // Determine format from filename
-                let format = '3inch';
-                if (selectedTemplate.includes('2inch')) {
-                    format = '2inch';
-                }
-                
                 // Render preview
                 let html = PrintTemplateEngine.renderPreview(template, sampleData);
                 
                 // Wrap in format container
-                html = `<div class="preview-receipt" data-format="${format}">${html}</div>`;
+                html = `<div class="preview-receipt" data-format="${currentFormat}">${html}</div>`;
                 
                 previewContent.innerHTML = html;
                 
@@ -201,10 +365,15 @@
         }
         
         // Load preview on page load
-        window.addEventListener('DOMContentLoaded', loadPreview);
-        
-        // Reload when template selection changes
-        document.getElementById('template-select').addEventListener('change', loadPreview);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPreview();
+            
+            // Add event listener for template type changes
+            document.getElementById('template-type-select').addEventListener('change', (e) => {
+                currentTemplateType = e.target.value;
+                loadPreview();
+            });
+        });
 
         /**
          * Export receipt preview to PNG

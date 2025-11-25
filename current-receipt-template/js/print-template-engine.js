@@ -119,6 +119,7 @@ const PrintTemplateEngine = (() => {
             return date.toLocaleTimeString('en-IN', {
                 hour: '2-digit',
                 minute: '2-digit',
+                second: '2-digit',
                 hour12: false
             });
         } catch (_e) {
@@ -216,12 +217,15 @@ const PrintTemplateEngine = (() => {
             'static_text': renderStaticText,
             'separator': renderSeparator,
             'newline': renderNewline,
+            'placeholder_block': renderPlaceholderBlock,
             'bill_date_row': renderBillDateRow,
+            'customer_info_row': renderCustomerInfoRow,
             'transaction_payment_row': renderTransactionPaymentRow,
             'transaction_calculation': renderTransactionCalculation,
             'item_header_row': renderItemHeaderRow,
             'bill_items': renderBillItems,
             'total_amount_row': renderTotalAmountRow,
+            'footer_message': renderFooterMessage,
             'qr_code': renderQRCode,
             'cut_paper': renderCutPaper
         };
@@ -279,6 +283,19 @@ const PrintTemplateEngine = (() => {
     }
 
     /**
+     * Render placeholder block (for logo/image space above business name)
+     */
+    function renderPlaceholderBlock(element, _data, _characterWidth) {
+        const height = element.height || 90; // Default height in pixels (increased by 50% from 60px)
+        let html = '<div class="receipt-placeholder-block">';
+        html += `<div class="placeholder-box" style="height: ${height}px;">`;
+        html += '<div class="placeholder-text">Logo/Image</div>';
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /**
      * Render bill date row (Bill No, Date, Time)
      */
     function renderBillDateRow(_element, data, _characterWidth) {
@@ -294,6 +311,21 @@ const PrintTemplateEngine = (() => {
         html += `<span class="bill-time">Time: ${billTime}</span>`;
         html += `</div>`;
         html += `</div>`;
+        html += '</div>';
+
+        return html;
+    }
+
+    /**
+     * Render customer info row (Customer name and Mobile No)
+     */
+    function renderCustomerInfoRow(_element, data, _characterWidth) {
+        const customerName = data.customer_name || data.customerName || 'N/A';
+        const customerMobile = data.customer_mobile || data.customerMobile || 'N/A';
+
+        let html = '<div class="customer-info">';
+        html += `<div class="receipt-text text-left font-normal font-normal">Customer: ${escapeHtml(customerName)}</div>`;
+        html += `<div class="receipt-text text-left font-normal font-normal">Mobile No: ${escapeHtml(customerMobile)}</div>`;
         html += '</div>';
 
         return html;
@@ -454,6 +486,17 @@ const PrintTemplateEngine = (() => {
         html += `<div class="total-row total-final"><span>TOTAL:</span><span>${formatCurrency(total)}</span></div>`;
         html += '</div>';
 
+        return html;
+    }
+
+    /**
+     * Render footer message (Thank you message)
+     */
+    function renderFooterMessage(_element, data, _characterWidth) {
+        let html = '<div class="receipt-footer-message">';
+        html += '<div class="receipt-static-text text-center font-small font-normal">Thank you for shopping with us!</div>';
+        html += '<div class="receipt-static-text text-center font-small font-normal">Visit again</div>';
+        html += '</div>';
         return html;
     }
 
