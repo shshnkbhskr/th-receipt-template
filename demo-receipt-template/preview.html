@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Inch Receipt Template Preview</title>
+    <link rel="stylesheet" href="preview.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .preview-header {
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        .preview-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        .preview-header h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .preview-header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .refresh-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-header">
+        <h1>3-Inch Receipt Template Preview</h1>
+        <p>Edit <code>template-3inch.json</code> and refresh to see changes</p>
+        <button class="refresh-btn" onclick="loadPreview()">Refresh Preview</button>
+    </div>
+    <div class="preview-container">
+        <div id="preview-content">
+            <div class="loading">Loading preview...</div>
+        </div>
+    </div>
+
+    <script src="template-engine.js"></script>
+    <script>
+        // Extended renderItemsTable to handle slNo calculation
+        function renderItemsTableExtended(element, data) {
+            const props = element.properties || {};
+            const styles = element.styles || {};
+            const fontClass = styles.font === 'fontB' ? 'font-b' : 'font-a';
+            const columns = props.columns || [];
+            
+            const items = data.items || [];
+            
+            let html = `<table class="receipt-items-table ${fontClass}">`;
+            
+            // Header row
+            html += '<thead><tr>';
+            columns.forEach(col => {
+                const alignClass = col.alignment === 'right' ? ' class="text-right font-b"' : ' class="font-b"';
+                html += `<th${alignClass}>${col.label}</th>`;
+            });
+            html += '</tr></thead>';
+            
+            // Data rows
+            html += '<tbody>';
+            items.forEach((item, index) => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    const alignClass = col.alignment === 'right' ? ' class="text-right font-a"' : ' class="font-a"';
+                    let value = item[col.field];
+                    
+                    // Calculate slNo if field is slNo and value is missing
+                    if (col.field === 'slNo' && (value === undefined || value === null)) {
+                        value = index + 1;
+                    }
+                    
+                    // Format numbers (but not slNo or qty)
+                    if (typeof value === 'number' && col.field !== 'qty' && col.field !== 'slNo') {
+                        value = TemplateEngine.formatCurrency(value);
+                    }
+                    
+                    html += `<td${alignClass}>${value}</td>`;
+                });
+                html += '</tr>';
+                
+                // SKU row if enabled
+                if (props.showSku && item.sku) {
+                    html += `<tr><td colspan="${columns.length}" class="receipt-item-sku font-a">SKU: ${item.sku}</td></tr>`;
+                }
+            });
+            html += '</tbody>';
+            html += '</table>';
+            
+            return html;
+        }
+
+        async function loadPreview() {
+            console.log('🔍 [DEBUG] loadPreview() started');
+            const previewContent = document.getElementById('preview-content');
+            
+            if (!previewContent) {
+                console.error('❌ [DEBUG] preview-content element not found!');
+                return;
+            }
+            
+            // Set loading state
+            previewContent.innerHTML = '<div class="loading">Loading preview...</div>';
+            
+            try {
+                // Check if TemplateEngine is loaded
+                if (typeof TemplateEngine === 'undefined') {
+                    throw new Error('TemplateEngine is not loaded. Check if template-engine.js is loaded correctly.');
+                }
+                console.log('✅ [DEBUG] TemplateEngine is loaded');
+                
+                // Load template
+                console.log('📥 [DEBUG] Fetching template-3inch.json...');
+                const templateResponse = await fetch('template-3inch.json');
+                if (!templateResponse.ok) {
+                    throw new Error(`Failed to load template: ${templateResponse.status} ${templateResponse.statusText}`);
+                }
+                console.log('✅ [DEBUG] Template file loaded successfully');
+                
+                let template;
+                try {
+                    template = await templateResponse.json();
+                    console.log('✅ [DEBUG] Template JSON parsed successfully');
+                    console.log('📋 [DEBUG] Template structure:', {
+                        format: template.format,
+                        elementsCount: template.template?.elements?.length || 0
+                    });
+                } catch (parseError) {
+                    throw new Error(`Failed to parse template JSON: ${parseError.message}`);
+                }
+                
+                // Load sample data
+                console.log('📥 [DEBUG] Fetching sample-data.json...');
+                const dataResponse = await fetch('sample-data.json');
+                if (!dataResponse.ok) {
+                    throw new Error(`Failed to load sample data: ${dataResponse.status} ${dataResponse.statusText}`);
+                }
+                console.log('✅ [DEBUG] Sample data file loaded successfully');
+                
+                let sampleData;
+                try {
+                    sampleData = await dataResponse.json();
+                    console.log('✅ [DEBUG] Sample data JSON parsed successfully');
+                    console.log('📋 [DEBUG] Sample data structure:', {
+                        hasCompany: !!sampleData.company,
+                        itemsCount: sampleData.items?.length || 0
+                    });
+                } catch (parseError) {
+                    throw new Error(`Failed to parse sample data JSON: ${parseError.message}`);
+                }
+                
+                // Ensure items have slNo (calculate if missing)
+                if (sampleData.items && Array.isArray(sampleData.items)) {
+                    sampleData.items.forEach((item, index) => {
+                        if (item.slNo === undefined || item.slNo === null) {
+                            item.slNo = index + 1;
+                        }
+                    });
+                }
+                
+                // Render preview using template engine
+                console.log('🎨 [DEBUG] Rendering preview with TemplateEngine...');
+                const format = template.format || '3inch';
+                
+                if (typeof TemplateEngine.renderPreview !== 'function') {
+                    throw new Error('TemplateEngine.renderPreview is not a function');
+                }
+                
+                let html = TemplateEngine.renderPreview(template, sampleData);
+                console.log('✅ [DEBUG] TemplateEngine.renderPreview completed');
+                console.log('📄 [DEBUG] Generated HTML length:', html.length);
+                console.log('📄 [DEBUG] Generated HTML preview (first 200 chars):', html.substring(0, 200));
+                
+                if (!html || html.trim().length === 0) {
+                    throw new Error('TemplateEngine.renderPreview returned empty HTML');
+                }
+                
+                // Replace items-table rendering to handle slNo calculation if needed
+                const itemsTableRegex = /<table class="receipt-items-table[^"]*">([\s\S]*?)<\/table>/g;
+                html = html.replace(itemsTableRegex, (match) => {
+                    // Re-render items table with extended function if slNo column exists
+                    const hasSlNoColumn = template.template.elements.some(el => 
+                        el.type === 'items-table' && 
+                        el.properties?.columns?.some(col => col.field === 'slNo')
+                    );
+                    if (hasSlNoColumn) {
+                        const itemsTableEl = template.template.elements.find(el => el.type === 'items-table');
+                        if (itemsTableEl) {
+                            return renderItemsTableExtended(itemsTableEl, sampleData);
+                        }
+                    }
+                    return match;
+                });
+                
+                // Handle newlines in text elements (convert \n to <br>)
+                html = html.replace(/(<div class="receipt-text[^"]*">)([^<]*?)(<\/div>)/g, (match, open, content, close) => {
+                    const withBreaks = content.replace(/\n/g, '<br>');
+                    return open + withBreaks + close;
+                });
+                
+                // Wrap in format container
+                html = `<div class="preview-receipt" data-format="${format}">${html}</div>`;
+                console.log('✅ [DEBUG] HTML processing completed');
+                console.log('📄 [DEBUG] Final HTML length:', html.length);
+                
+                // Insert HTML
+                console.log('💾 [DEBUG] Inserting HTML into preview-content...');
+                previewContent.innerHTML = html;
+                console.log('✅ [DEBUG] Preview loaded successfully!');
+                
+            } catch (error) {
+                console.error('❌ [DEBUG] Error occurred:', error);
+                console.error('❌ [DEBUG] Error stack:', error.stack);
+                previewContent.innerHTML = `<div class="error">
+                    <strong>Error loading preview:</strong><br>
+                    ${error.message}<br><br>
+                    <strong>Debug Info:</strong><br>
+                    Check the browser console (F12) for detailed error information.<br><br>
+                    Make sure <code>template-3inch.json</code> and <code>sample-data.json</code> are in the same directory.
+                </div>`;
+            }
+        }
+        
+        // Load preview on page load
+        window.addEventListener('DOMContentLoaded', loadPreview);
+    </script>
+</body>
+</html>
+

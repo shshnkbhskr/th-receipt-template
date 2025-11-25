@@ -1,0 +1,144 @@
+{
+  "receipt_template": {
+    "characterWidth": 32,
+    "elements": [
+      {
+        "alignment": "CENTER",
+        "font_size": "NORMAL",
+        "font_weight": "BOLD",
+        "type": "text",
+        "value": "${shop_name}"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "SMALL",
+        "font_weight": "NORMAL",
+        "type": "text",
+        "value": "${shop_address}"
+      },
+      {
+        "type": "newline"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "SMALL",
+        "font_weight": "BOLD",
+        "type": "text",
+        "value": "GSTIN: ${gstin}"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "NORMAL",
+        "font_weight": "NORMAL",
+        "type": "text",
+        "value": "Ph: ${phone_number}"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "type": "bill_date_row"
+      },
+      {
+        "alignment": "LEFT",
+        "font_size": "NORMAL",
+        "font_weight": "NORMAL",
+        "type": "text",
+        "value": "Customer: ${customer_name}"
+      },
+      {
+        "alignment": "LEFT",
+        "font_size": "NORMAL",
+        "font_weight": "NORMAL",
+        "type": "text",
+        "value": "Mobile No: ${customer_mobile}"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "type": "transaction_payment_row"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "alignment": "RIGHT",
+        "font_size": "NORMAL",
+        "type": "transaction_calculation"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "type": "total_amount_row"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "alignment": "CENTER",
+        "error_correction": "M",
+        "size": "MEDIUM",
+        "type": "qr_code",
+        "value": "${qr_data}"
+      },
+      {
+        "type": "newline"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "NORMAL",
+        "font_weight": "NORMAL",
+        "type": "static_text",
+        "value": "SCAN TO PAY"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "SMALL",
+        "font_weight": "NORMAL",
+        "type": "static_text",
+        "value": "Thank you for shopping with us!"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "SMALL",
+        "font_weight": "NORMAL",
+        "type": "static_text",
+        "value": "Visit again"
+      },
+      {
+        "length": 32,
+        "style": "DASHED",
+        "type": "separator"
+      },
+      {
+        "alignment": "CENTER",
+        "font_size": "SMALL",
+        "font_weight": "NORMAL",
+        "type": "static_text",
+        "value": "Powered by Tohands"
+      },
+      {
+        "type": "cut_paper"
+      }
+    ],
+    "paperWidth": 58
+  }
+}
+

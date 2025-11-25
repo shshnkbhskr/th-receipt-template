@@ -1,0 +1,241 @@
+{
+  "format": "3inch",
+  "metadata": {
+    "name": "3-Inch Receipt Template",
+    "description": "Complete 3-inch thermal printer receipt template with all standard elements",
+    "created": "2025-01-15T10:00:00Z"
+  },
+  "template": {
+    "elements": [
+      {
+        "id": "header-1",
+        "type": "header",
+        "properties": {
+          "logo": "{{company.logo}}",
+          "companyName": "{{company.name}}",
+          "address": "{{company.address}}",
+          "gstin": "{{company.gstin}}"
+        },
+        "styles": {
+          "font": "fontB",
+          "alignment": "center"
+        }
+      },
+      {
+        "id": "header-business-number-1",
+        "type": "text",
+        "properties": {
+          "text": "Business No: {{company.businessNumber}}"
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "center"
+        }
+      },
+      {
+        "id": "divider-1",
+        "type": "divider"
+      },
+      {
+        "id": "transaction-1",
+        "type": "transaction",
+        "properties": {
+          "billNo": "{{transaction.billNo}}",
+          "cashier": "{{transaction.cashier}}",
+          "date": "{{transaction.date}}",
+          "time": "{{transaction.time}}"
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "left"
+        }
+      },
+      {
+        "id": "transaction-details-1",
+        "type": "text",
+        "properties": {
+          "text": "Customer: {{transaction.customer}}\nType: {{transaction.type}} | Payment: {{transaction.paymentType}}"
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "left"
+        }
+      },
+      {
+        "id": "divider-2",
+        "type": "divider"
+      },
+      {
+        "id": "items-table-1",
+        "type": "items-table",
+        "properties": {
+          "dataSource": "{{items}}",
+          "columns": [
+            {
+              "field": "slNo",
+              "label": "Sl No.",
+              "width": "10%",
+              "alignment": "left"
+            },
+            {
+              "field": "name",
+              "label": "Item",
+              "width": "40%",
+              "alignment": "left"
+            },
+            {
+              "field": "qty",
+              "label": "Qty",
+              "width": "15%",
+              "alignment": "right"
+            },
+            {
+              "field": "rate",
+              "label": "Price",
+              "width": "17.5%",
+              "alignment": "right"
+            },
+            {
+              "field": "amount",
+              "label": "Amount",
+              "width": "17.5%",
+              "alignment": "right"
+            }
+          ],
+          "showSku": false
+        },
+        "styles": {
+          "font": "fontA"
+        }
+      },
+      {
+        "id": "divider-3",
+        "type": "divider"
+      },
+      {
+        "id": "tax-1",
+        "type": "tax",
+        "properties": {
+          "taxTypes": ["cgst", "sgst", "igst"]
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "left"
+        }
+      },
+      {
+        "id": "summary-1",
+        "type": "summary",
+        "properties": {
+          "subtotal": "{{summary.subtotal}}",
+          "discount": "{{summary.discount}}",
+          "total": "{{summary.total}}"
+        },
+        "styles": {
+          "font": "fontB",
+          "alignment": "right"
+        }
+      },
+      {
+        "id": "divider-4",
+        "type": "divider"
+      },
+      {
+        "id": "payment-1",
+        "type": "payment",
+        "properties": {
+          "qrCode": "{{payment.qrCode}}",
+          "qrCodeImage": "{{payment.qrCodeImage}}",
+          "text": "Scan to Pay"
+        },
+        "styles": {
+          "font": "fontB",
+          "alignment": "center"
+        }
+      },
+      {
+        "id": "message-1",
+        "type": "text",
+        "properties": {
+          "text": "{{message.text}}"
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "center"
+        }
+      },
+      {
+        "id": "divider-5",
+        "type": "divider"
+      },
+      {
+        "id": "footer-1",
+        "type": "footer",
+        "properties": {
+          "poweredBy": "Tohands Smart Calculator"
+        },
+        "styles": {
+          "font": "fontA",
+          "alignment": "center"
+        }
+      }
+    ]
+  },
+  "customComponents": [],
+  "variables": {
+    "company": {
+      "logo": "string (base64 image or URL)",
+      "name": "string",
+      "address": "string",
+      "businessNumber": "string",
+      "gstin": "string"
+    },
+    "transaction": {
+      "billNo": "string",
+      "cashier": "string",
+      "date": "string",
+      "time": "string",
+      "customer": "string",
+      "type": "string (Sale/Expense/Bill)",
+      "paymentType": "string (cash/card/UPI/due)"
+    },
+    "items": {
+      "type": "array",
+      "item": {
+        "slNo": "number (optional, can be calculated as index+1)",
+        "name": "string",
+        "qty": "number",
+        "rate": "number",
+        "amount": "number",
+        "sku": "string (optional)"
+      }
+    },
+    "tax": {
+      "cgst": {
+        "rate": "number",
+        "amount": "number"
+      },
+      "sgst": {
+        "rate": "number",
+        "amount": "number"
+      },
+      "igst": {
+        "rate": "number",
+        "amount": "number"
+      }
+    },
+    "summary": {
+      "subtotal": "number",
+      "discount": "number",
+      "total": "number"
+    },
+    "payment": {
+      "qrCode": "string (UPI string)",
+      "qrCodeImage": "string (base64 image or URL)"
+    },
+    "message": {
+      "text": "string (customizable message)"
+    }
+  }
+}
+

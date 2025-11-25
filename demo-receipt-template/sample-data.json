@@ -1,0 +1,71 @@
+{
+  "company": {
+    "logo": "",
+    "name": "Sample Company Name",
+    "address": "1st floor, New # 5, 150/2, 1st B Main Rd, Koramangala 8th Block, Koramangala, Bengaluru, Karnataka 560095",
+    "businessNumber": "BUS123456",
+    "gstin": "29ABCDE1234F1Z5"
+  },
+  "transaction": {
+    "billNo": "102394",
+    "cashier": "007",
+    "date": "31-05-2025",
+    "time": "14:35",
+    "customer": "John Doe",
+    "type": "Sale",
+    "paymentType": "UPI"
+  },
+  "items": [
+    {
+      "slNo": 1,
+      "name": "Sample Product 1",
+      "qty": 2,
+      "rate": 150.00,
+      "amount": 300.00,
+      "sku": "SKU001"
+    },
+    {
+      "slNo": 2,
+      "name": "Sample Product 2 with Long Name",
+      "qty": 1,
+      "rate": 500.00,
+      "amount": 500.00,
+      "sku": "SKU002"
+    },
+    {
+      "slNo": 3,
+      "name": "Sample Product 3",
+      "qty": 3,
+      "rate": 100.00,
+      "amount": 300.00,
+      "sku": "SKU003"
+    }
+  ],
+  "summary": {
+    "subtotal": 1100.00,
+    "discount": 100.00,
+    "total": 1000.00
+  },
+  "tax": {
+    "cgst": {
+      "rate": 9,
+      "amount": 90.00
+    },
+    "sgst": {
+      "rate": 9,
+      "amount": 90.00
+    },
+    "igst": {
+      "rate": 0,
+      "amount": 0.00
+    }
+  },
+  "payment": {
+    "qrCode": "upi://pay?pa=merchant@upi&am=1000.00&cu=INR",
+    "qrCodeImage": ""
+  },
+  "message": {
+    "text": "Thank you for your purchase! Visit us again."
+  }
+}
+

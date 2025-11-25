@@ -1,0 +1,57 @@
+{
+  "shop_name": "Tohands Store",
+  "shop_address": "1st Floor, 150/1, 1st B cross Street, Koramangala 8th block, Bangalore Karnataka 560095 India",
+  "gstin": "29ABCDE1234F1Z5",
+  "phone_number": "9876543210",
+  "customer_name": "Praveen Doe",
+  "customer_mobile": "9876543210",
+  "qr_data": "upi://pay?pa=merchant@upi&pn=Tohands%20Store&am=1040.00&cu=INR",
+  "bill_date": "2025-01-15T14:30:00Z",
+  "bill_number": "001",
+  "transaction_type": "Sale",
+  "payment_type": "UPI",
+  "cashier": "Cashier-001",
+  "items": [
+    {
+      "slNo": 1,
+      "name": "Product A",
+      "qty": 2,
+      "rate": 9999.9,
+      "amount": 9999.99,
+      "sku": "001"
+    },
+    {
+      "slNo": 2,
+      "name": "Product B",
+      "qty": 3,
+      "rate": 9999.9,
+      "amount": 9999.99,
+      "sku": "002"
+    },
+    {
+      "slNo": 3,
+      "name": "Product C",
+      "qty": 1,
+      "rate": 9999.9,
+      "amount": 9999.99,
+      "sku": "003"
+    }
+  ],
+  "subtotal": 1000.00,
+  "discount": 50.00,
+  "tax": {
+    "cgst": {
+      "rate": 9,
+      "amount": 45.00
+    },
+    "sgst": {
+      "rate": 9,
+      "amount": 45.00
+    },
+    "igst": {
+      "rate": 18,
+      "amount": 0.00
+    }
+  },
+  "total": 1040.00
+}

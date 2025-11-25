@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Receipt Template Preview</title>
+    <link rel="stylesheet" href="css/print-preview.css">
+    <!-- Export libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .preview-header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .preview-header h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .preview-header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .control-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .preview-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-header">
+        <h1>Print Receipt Template Preview</h1>
+        <p>Preview receipt templates with sample data</p>
+        <div class="controls">
+            <div class="control-group">
+                <label>Template:</label>
+                <select id="template-select">
+                    <option value="templates/print_bill_2inch_template.json">Bill - 2 inch</option>
+                    <option value="templates/print_transaction_2inch_template.json">Transaction - 2 inch</option>
+                    <option value="templates/print_bill_3inch_template.json">Bill - 3 inch</option>
+                    <option value="templates/print_transaction_3inch_template.json" selected>Transaction - 3 inch</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="loadPreview()">Refresh Preview</button>
+            </div>
+            <div class="control-group">
+                <label>Export:</label>
+                <button onclick="exportToPNG()" style="background: #2196F3;">Export PNG</button>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="exportToPDF()" style="background: #f44336;">Export PDF</button>
+            </div>
+        </div>
+    </div>
+    <div class="preview-container">
+        <div id="preview-content">
+            <div class="loading">Loading preview...</div>
+        </div>
+    </div>
+
+    <script src="js/print-template-engine.js"></script>
+    <script>
+        async function loadPreview() {
+            const previewContent = document.getElementById('preview-content');
+            const templateSelect = document.getElementById('template-select');
+            const selectedTemplate = templateSelect.value;
+            
+            previewContent.innerHTML = '<div class="loading">Loading preview...</div>';
+            
+            try {
+                // Load template (with cache-busting to ensure fresh template)
+                const templateUrl = selectedTemplate + '?t=' + Date.now() + '&_=' + Math.random();
+                console.log('Loading template from:', templateUrl);
+                const templateResponse = await fetch(templateUrl, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                if (!templateResponse.ok) {
+                    throw new Error(`Failed to load template: ${templateResponse.statusText}`);
+                }
+                const template = await templateResponse.json();
+                
+                // Load sample data (with cache-busting to ensure fresh data)
+                let sampleData;
+                try {
+                    const dataUrl = 'data/variables-example.json?t=' + Date.now() + '&_=' + Math.random();
+                    console.log('Loading data from:', dataUrl);
+                    const dataResponse = await fetch(dataUrl, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        }
+                    });
+                    if (dataResponse.ok) {
+                        sampleData = await dataResponse.json();
+                        console.log('Data loaded successfully:', sampleData);
+                    } else {
+                        console.warn('Failed to load data, using default');
+                        sampleData = PrintTemplateEngine.getDefaultSampleData();
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    sampleData = PrintTemplateEngine.getDefaultSampleData();
+                }
+                
+                // Validate template
+                const validation = PrintTemplateEngine.validateTemplate(template);
+                if (!validation.valid) {
+                    throw new Error('Template validation failed: ' + validation.errors.join(', '));
+                }
+                
+                // Determine format from filename
+                let format = '3inch';
+                if (selectedTemplate.includes('2inch')) {
+                    format = '2inch';
+                }
+                
+                // Render preview
+                let html = PrintTemplateEngine.renderPreview(template, sampleData);
+                
+                // Wrap in format container
+                html = `<div class="preview-receipt" data-format="${format}">${html}</div>`;
+                
+                previewContent.innerHTML = html;
+                
+                // Log warnings if any
+                if (validation.warnings.length > 0) {
+                    console.warn('Template warnings:', validation.warnings);
+                }
+                
+            } catch (error) {
+                previewContent.innerHTML = `<div class="error">
+                    <strong>Error loading preview:</strong><br>
+                    ${error.message}<br><br>
+                    Make sure the template file is in <code>templates/</code> and <code>variables-example.json</code> is in <code>data/</code> directory.
+                </div>`;
+                console.error('Preview error:', error);
+            }
+        }
+        
+        // Load preview on page load
+        window.addEventListener('DOMContentLoaded', loadPreview);
+        
+        // Reload when template selection changes
+        document.getElementById('template-select').addEventListener('change', loadPreview);
+
+        /**
+         * Export receipt preview to PNG
+         */
+        async function exportToPNG() {
+            const receiptElement = document.querySelector('.preview-receipt');
+            if (!receiptElement) {
+                alert('No receipt preview available. Please load a template first.');
+                return;
+            }
+
+            try {
+                // Check if html2canvas is loaded
+                if (typeof html2canvas === 'undefined') {
+                    alert('Export library not loaded. Please check your internet connection.');
+                    return;
+                }
+
+                // Show loading indicator (don't replace content)
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'export-loading';
+                loadingIndicator.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 10000;';
+                loadingIndicator.textContent = 'Generating PNG...';
+                document.body.appendChild(loadingIndicator);
+
+                // Capture the receipt
+                const canvas = await html2canvas(receiptElement, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false
+                });
+
+                // Remove loading indicator
+                document.body.removeChild(loadingIndicator);
+
+                // Convert to blob and download
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `receipt-${Date.now()}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            } catch (error) {
+                console.error('Error exporting to PNG:', error);
+                alert('Error exporting to PNG: ' + error.message);
+                // Remove loading indicator if it exists
+                const loadingIndicator = document.getElementById('export-loading');
+                if (loadingIndicator) {
+                    document.body.removeChild(loadingIndicator);
+                }
+            }
+        }
+
+        /**
+         * Export receipt preview to PDF
+         */
+        async function exportToPDF() {
+            const receiptElement = document.querySelector('.preview-receipt');
+            if (!receiptElement) {
+                alert('No receipt preview available. Please load a template first.');
+                return;
+            }
+
+            try {
+                // Check if libraries are loaded
+                if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+                    alert('Export libraries not loaded. Please check your internet connection.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+
+                // Show loading indicator (don't replace content)
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'export-loading';
+                loadingIndicator.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 10000;';
+                loadingIndicator.textContent = 'Generating PDF...';
+                document.body.appendChild(loadingIndicator);
+
+                // Capture the receipt as image
+                const canvas = await html2canvas(receiptElement, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false
+                });
+
+                // Remove loading indicator
+                document.body.removeChild(loadingIndicator);
+
+                // Get dimensions
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const imgData = canvas.toDataURL('image/png');
+
+                // Determine format from receipt element
+                const format = receiptElement.getAttribute('data-format') || '3inch';
+                const pdfWidth = format === '2inch' ? 48 : 80; // Receipt width in mm
+                const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
+
+                // Create PDF
+                const pdf = new jsPDF({
+                    orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+                    unit: 'mm',
+                    format: [pdfWidth, pdfHeight]
+                });
+
+                // Add image to PDF
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                // Save PDF
+                pdf.save(`receipt-${Date.now()}.pdf`);
+            } catch (error) {
+                console.error('Error exporting to PDF:', error);
+                alert('Error exporting to PDF: ' + error.message);
+                // Remove loading indicator if it exists
+                const loadingIndicator = document.getElementById('export-loading');
+                if (loadingIndicator) {
+                    document.body.removeChild(loadingIndicator);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
