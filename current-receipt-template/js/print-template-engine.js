@@ -252,6 +252,7 @@ const PrintTemplateEngine = (() => {
             'transaction_calculation_v2': renderTransactionCalculationV2,
             'item_header_row': renderItemHeaderRow,
             'bill_items': renderBillItems,
+            'total_qty_items_row': renderTotalQtyItemsRow,
             'total_amount_row': renderTotalAmountRow,
             'total_amount_row_simple': renderTotalAmountRowSimple,
             'footer_message': renderFooterMessage,
@@ -545,6 +546,23 @@ const PrintTemplateEngine = (() => {
     }
 
     /**
+     * Render total qty and items row
+     */
+    function renderTotalQtyItemsRow(_element, data, _characterWidth) {
+        const items = data.items || [];
+        
+        // Calculate total quantity
+        const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+        const totalItems = items.length;
+
+        let html = '<div class="receipt-total-qty-items-row">';
+        html += `<div class="total-row"><span>Total Qty: ${totalQty}</span><span>Total Items: ${totalItems}</span></div>`;
+        html += '</div>';
+
+        return html;
+    }
+
+    /**
      * Render total amount row
      */
     function renderTotalAmountRow(_element, data, _characterWidth) {
@@ -559,19 +577,19 @@ const PrintTemplateEngine = (() => {
         html += `<div class="total-row"><span>Subtotal:</span><span>${formatCurrency(subtotal)}</span></div>`;
 
         if (discount > 0) {
-            // Determine discount label based on type
+            // Determine discount label and value based on type
             let discountLabel = 'Discount';
-            if (discountType === 'percentage' || discountType === 'percent') {
-                discountLabel = 'Discount (%)';
-            } else {
-                discountLabel = 'Discount (₹)';
-            }
-
-            // Format discount value
             let discountValue;
+            
             if (discountType === 'percentage' || discountType === 'percent') {
-                discountValue = `${discount}%`;
+                // Show percentage in label with minus operator (e.g., "Discount -50%:")
+                discountLabel = `Discount -${discount}%`;
+                // Calculate and show discount amount in rupees
+                const discountAmount = (subtotal * discount) / 100;
+                discountValue = formatCurrency(discountAmount);
             } else {
+                // Show currency label and amount
+                discountLabel = 'Discount (₹)';
                 discountValue = formatCurrency(discount);
             }
 

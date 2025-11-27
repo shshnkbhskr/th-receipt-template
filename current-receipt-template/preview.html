@@ -62,6 +62,18 @@
         .preview-container.panel-collapsed {
             margin-left: 0;
         }
+        #preview-content {
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 1, 1);
+            width: 100%;
+        }
+        #preview-content.fade-out {
+            opacity: 0;
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 1, 1);
+        }
+        #preview-content.fade-in {
+            opacity: 1;
+            transition: opacity 0.3s cubic-bezier(0.42, 0, 1, 1);
+        }
         .error {
             color: #d32f2f;
             background: #ffebee;
@@ -153,10 +165,24 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <div class="control-section">
+                    <label class="control-label">Discount:</label>
+                    <div class="format-switcher">
+                        <button class="format-btn active" id="discount-percentage" onclick="toggleDiscountType(true)">%</button>
+                        <button class="format-btn" id="discount-currency" onclick="toggleDiscountType(false)">₹</button>
+                    </div>
+                </div>
                 <div class="control-section toggle-section" id="serial-no-control" style="display: none;">
                     <label class="control-label">Serial No:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="serial-no-toggle" checked onchange="toggleSerialNo(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-section toggle-section" id="total-qty-items-control" style="display: none;">
+                    <label class="control-label">Total Qty/Items:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="total-qty-items-toggle" checked onchange="toggleTotalQtyItems(this.checked)">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -182,6 +208,9 @@
         let showGSTIN = true; // Show or hide GSTIN field and tax fields
         let showSerialNo = true; // Show or hide serial number column for Bill template
         let currentPaymentMode = 'UPI'; // Current payment mode (Cash, UPI, Due, Card)
+        let discountAsPercentage = true; // Show discount as percentage (true) or currency (false) - default to percentage mode
+        let showTotalQtyItems = true; // Show or hide total qty/items row for Bill and Transaction templates
+        let isInitialLoad = true; // Track if this is the first load
 
         /**
          * Get template path based on current type and format
@@ -294,12 +323,37 @@
         }
 
         /**
+         * Toggle discount display type (percentage or currency)
+         */
+        function toggleDiscountType(asPercentage) {
+            if (asPercentage === discountAsPercentage) return;
+            
+            discountAsPercentage = asPercentage;
+            
+            // Update button states
+            document.getElementById('discount-percentage').classList.toggle('active', asPercentage);
+            document.getElementById('discount-currency').classList.toggle('active', !asPercentage);
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
          * Toggle serial number column visibility for Bill template
          */
         function toggleSerialNo(show) {
             if (show === showSerialNo) return;
             
             showSerialNo = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        function toggleTotalQtyItems(show) {
+            if (show === showTotalQtyItems) return;
+            
+            showTotalQtyItems = show;
             
             // Reload preview automatically
             loadPreview();
@@ -350,6 +404,15 @@
         async function loadPreview() {
             const previewContent = document.getElementById('preview-content');
             const selectedTemplate = getTemplatePath();
+            
+            // Fade out current content (skip on initial load)
+            if (!isInitialLoad) {
+                previewContent.classList.remove('fade-in');
+                previewContent.classList.add('fade-out');
+                
+                // Wait for fade-out animation to complete
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
             
             previewContent.innerHTML = '<div class="loading">Loading preview...</div>';
             
@@ -454,6 +517,19 @@
                 // Update payment type based on selected payment mode
                 sampleData.payment_type = currentPaymentMode;
                 
+                // Update discount type based on toggle
+                // When toggle is ON (percentage), discount value is treated as percentage rate
+                // Label will show "Discount X%:" and value will show calculated amount "₹Y"
+                if (sampleData.discount && sampleData.discount > 0) {
+                    if (discountAsPercentage) {
+                        // Set discount_type to percentage so label shows "Discount X%:"
+                        // The rendering function will calculate and show the amount in rupees
+                        sampleData.discount_type = 'percentage';
+                    } else {
+                        sampleData.discount_type = 'amount';
+                    }
+                }
+                
                 // Filter template elements based on logo visibility
                 if (!showLogo && template.receipt_template && template.receipt_template.elements) {
                     // Create a copy of the template and filter out placeholder_block elements
@@ -487,13 +563,21 @@
                     };
                 }
                 
-                // Filter out newline elements, QR code and "SCAN TO PAY" elements based on payment mode
-                // QR code should only be visible for "Due" payment mode
+                // Add total_qty_items_row before total_amount_row for Bill and Transaction types (not Transaction V2)
+                // Also filter out newline elements, QR code and "SCAN TO PAY" elements based on payment mode
                 if (template.receipt_template && template.receipt_template.elements) {
                     const filteredElements = [];
+                    const isTransactionV2 = currentTemplateType === 'transaction_v2';
+                    
                     for (let i = 0; i < template.receipt_template.elements.length; i++) {
                         const element = template.receipt_template.elements[i];
                         const prevElement = i > 0 ? template.receipt_template.elements[i - 1] : null;
+                        
+                        // Insert total_qty_items_row before total_amount_row for Bill and Transaction (not V2)
+                        // Only if showTotalQtyItems is true
+                        if (element.type === 'total_amount_row' && !isTransactionV2 && showTotalQtyItems) {
+                            filteredElements.push({ type: 'total_qty_items_row' });
+                        }
                         
                         // Skip newline elements
                         if (element.type === 'newline') {
@@ -610,6 +694,15 @@
                 
                 previewContent.innerHTML = html;
                 
+                // Fade in new content
+                previewContent.classList.remove('fade-out');
+                previewContent.classList.add('fade-in');
+                
+                // Mark that initial load is complete
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                }
+                
                 // Log warnings if any
                 if (validation.warnings.length > 0) {
                     console.warn('Template warnings:', validation.warnings);
@@ -621,6 +714,16 @@
                     ${error.message}<br><br>
                     Make sure the template file is in <code>templates/</code> and <code>variables-example.json</code> is in <code>data/</code> directory.
                 </div>`;
+                
+                // Fade in error message
+                previewContent.classList.remove('fade-out');
+                previewContent.classList.add('fade-in');
+                
+                // Mark that initial load is complete even on error
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                }
+                
                 console.error('Preview error:', error);
             }
         }
@@ -632,15 +735,22 @@
             // Add event listener for template type changes
             document.getElementById('template-type-select').addEventListener('change', (e) => {
                 currentTemplateType = e.target.value;
-                // Show/hide decimals control based on template type
+                // Show/hide controls based on template type
                 const decimalsControl = document.getElementById('decimals-control');
                 const serialNoControl = document.getElementById('serial-no-control');
+                const totalQtyItemsControl = document.getElementById('total-qty-items-control');
                 if (currentTemplateType === 'bill') {
                     decimalsControl.style.display = 'flex';
                     serialNoControl.style.display = 'flex';
+                    totalQtyItemsControl.style.display = 'flex';
+                } else if (currentTemplateType === 'transaction') {
+                    decimalsControl.style.display = 'none';
+                    serialNoControl.style.display = 'none';
+                    totalQtyItemsControl.style.display = 'flex';
                 } else {
                     decimalsControl.style.display = 'none';
                     serialNoControl.style.display = 'none';
+                    totalQtyItemsControl.style.display = 'none';
                 }
                 loadPreview();
             });
@@ -648,12 +758,19 @@
             // Initialize control visibility
             const decimalsControl = document.getElementById('decimals-control');
             const serialNoControl = document.getElementById('serial-no-control');
+            const totalQtyItemsControl = document.getElementById('total-qty-items-control');
             if (currentTemplateType === 'bill') {
                 decimalsControl.style.display = 'flex';
                 serialNoControl.style.display = 'flex';
+                totalQtyItemsControl.style.display = 'flex';
+            } else if (currentTemplateType === 'transaction') {
+                decimalsControl.style.display = 'none';
+                serialNoControl.style.display = 'none';
+                totalQtyItemsControl.style.display = 'flex';
             } else {
                 decimalsControl.style.display = 'none';
                 serialNoControl.style.display = 'none';
+                totalQtyItemsControl.style.display = 'none';
             }
             
             // Initialize payment mode selector
@@ -661,6 +778,10 @@
             if (paymentModeSelect) {
                 paymentModeSelect.value = currentPaymentMode;
             }
+            
+            // Initialize discount type button states
+            document.getElementById('discount-percentage').classList.toggle('active', discountAsPercentage);
+            document.getElementById('discount-currency').classList.toggle('active', !discountAsPercentage);
         });
 
         /**
