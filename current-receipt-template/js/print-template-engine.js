@@ -73,7 +73,34 @@ const PrintTemplateEngine = (() => {
                 sgst: { rate: 9, amount: 45.00 },
                 igst: { rate: 0, amount: 0.00 }
             },
-            total: 1040.00
+            total: 1040.00,
+            calculation_steps: [
+                {
+                    operator: 'x',
+                    operand: '100.00'
+                },
+                {
+                    operator: 'x',
+                    operand: '2.00'
+                },
+                {
+                    operator: '+',
+                    operand: '150.00'
+                },
+                {
+                    operator: 'x',
+                    operand: '3.00'
+                },
+                {
+                    operator: '-',
+                    operand: '50.00'
+                },
+                {
+                    operator: '=',
+                    operand: '₹1,040.00',
+                    isFinal: true
+                }
+            ]
         };
     }
 
@@ -222,9 +249,11 @@ const PrintTemplateEngine = (() => {
             'customer_info_row': renderCustomerInfoRow,
             'transaction_payment_row': renderTransactionPaymentRow,
             'transaction_calculation': renderTransactionCalculation,
+            'transaction_calculation_v2': renderTransactionCalculationV2,
             'item_header_row': renderItemHeaderRow,
             'bill_items': renderBillItems,
             'total_amount_row': renderTotalAmountRow,
+            'total_amount_row_simple': renderTotalAmountRowSimple,
             'footer_message': renderFooterMessage,
             'qr_code': renderQRCode,
             'cut_paper': renderCutPaper
@@ -304,12 +333,10 @@ const PrintTemplateEngine = (() => {
         const billTime = formatTime(data.bill_date || data.billDate);
 
         let html = '<div class="receipt-bill-date-row">';
-        html += `<div class="receipt-bill-info">`;
         html += `<span>Bill No: ${billNumber}</span>`;
         html += `<div class="receipt-date-time-row">`;
         html += `<span class="bill-date">Date: ${billDate}</span>`;
         html += `<span class="bill-time">Time: ${billTime}</span>`;
-        html += `</div>`;
         html += `</div>`;
         html += '</div>';
 
@@ -394,16 +421,93 @@ const PrintTemplateEngine = (() => {
     }
 
     /**
+     * Render transaction calculation v2 (step-wise calculation)
+     * Format: Each step on a separate row with operator on left and operand on right
+     * Finalizing operations (=, %, GT, M+, M-) have top and bottom borders
+     */
+    function renderTransactionCalculationV2(element, data, _characterWidth) {
+        const alignment = element.alignment || 'RIGHT';
+        const fontSize = element.font_size || 'NORMAL';
+
+        // Get calculation steps from data
+        const calculationSteps = data.calculation_steps || [];
+
+        // If no steps provided, generate from items (backward compatibility)
+        if (calculationSteps.length === 0 && data.items && data.items.length > 0) {
+            // Generate steps from items
+            data.items.forEach((item) => {
+                const rate = item.rate || 0;
+                const qty = item.qty || 0;
+                calculationSteps.push({
+                    operator: 'x',
+                    operand: formatIndianNumber(rate)
+                });
+                calculationSteps.push({
+                    operator: 'x',
+                    operand: formatIndianNumber(qty)
+                });
+            });
+
+            // Add discount if present
+            const discount = data.discount || 0;
+            if (discount > 0) {
+                const discountType = data.discount_type || data.discountType || 'amount';
+                if (discountType === 'percentage' || discountType === 'percent') {
+                    calculationSteps.push({
+                        operator: '-',
+                        operand: formatIndianNumber(discount) + '%'
+                    });
+                } else {
+                    calculationSteps.push({
+                        operator: '-',
+                        operand: formatIndianNumber(discount)
+                    });
+                }
+            }
+
+            // Don't add final result here - it will be shown in total_amount_row_simple
+        }
+
+        // Filter out finalizing operations - they should not be displayed in calculation steps
+        // Finalizing operations: =, %, GT, M+, M-
+        const finalizingOps = ['=', '%', 'GT', 'M+', 'M-'];
+        const displaySteps = calculationSteps.filter(step => {
+            const operator = step.operator || '';
+            const isFinal = step.isFinal === true;
+            return !isFinal && !finalizingOps.includes(operator);
+        });
+
+        let html = `<div class="receipt-transaction-calculation-v2 text-${alignment.toLowerCase()} font-${fontSize.toLowerCase()}">`;
+        html += '<div class="calculation-steps">';
+
+        displaySteps.forEach((step, index) => {
+            const operator = step.operator || '';
+            const operand = step.operand || '';
+
+            html += `<div class="calculation-step">`;
+            html += `<span class="calculation-operator">${escapeHtml(operator)}</span>`;
+            html += `<span class="calculation-operand">${escapeHtml(operand)}</span>`;
+            html += '</div>';
+        });
+
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /**
      * Render item header row
      */
     function renderItemHeaderRow(_element, _data, _characterWidth) {
         let html = '<div class="receipt-item-header-row">';
-        html += '<div class="item-header">';
+        html += '<div class="item-table">';
+        html += '<div class="item-header-row">';
         html += '<span class="item-sno">#</span>';
         html += '<span class="item-name">Item</span>';
         html += '<span class="item-qty">Qty</span>';
         html += '<span class="item-price">Price</span>';
         html += '<span class="item-amount">Amount</span>';
+        html += '</div>';
         html += '</div>';
         html += '</div>';
 
@@ -417,6 +521,7 @@ const PrintTemplateEngine = (() => {
         const items = data.items || [];
 
         let html = '<div class="receipt-bill-items">';
+        html += '<div class="item-table">';
 
         items.forEach((item, index) => {
             const slNo = item.slNo !== undefined ? item.slNo : index + 1;
@@ -434,6 +539,7 @@ const PrintTemplateEngine = (() => {
             html += '</div>';
         });
 
+        html += '</div>';
         html += '</div>';
         return html;
     }
@@ -490,12 +596,25 @@ const PrintTemplateEngine = (() => {
     }
 
     /**
+     * Render simple total amount row (only shows total, no subtotal/discount/tax)
+     * Used for transaction v2 receipts
+     */
+    function renderTotalAmountRowSimple(_element, data, _characterWidth) {
+        const total = data.total || 0;
+
+        let html = '<div class="receipt-total-amount-row">';
+        html += `<div class="total-row total-final"><span>TOTAL:</span><span>${formatCurrency(total)}</span></div>`;
+        html += '</div>';
+
+        return html;
+    }
+
+    /**
      * Render footer message (Thank you message)
      */
     function renderFooterMessage(_element, data, _characterWidth) {
         let html = '<div class="receipt-footer-message">';
-        html += '<div class="receipt-static-text text-center font-small font-normal">Thank you for shopping with us!</div>';
-        html += '<div class="receipt-static-text text-center font-small font-normal">Visit again</div>';
+        html += '<div class="receipt-static-text text-center font-small font-normal">Thank you for shopping with us! Visit again</div>';
         html += '</div>';
         return html;
     }
@@ -513,6 +632,7 @@ const PrintTemplateEngine = (() => {
         html += `<div class="qr-placeholder qr-${size.toLowerCase()}" data-qr="${escapeHtml(qrData)}">`;
         html += '<div class="qr-text">QR Code</div>';
         html += '</div>';
+        html += '<div class="receipt-static-text text-center font-normal font-normal">SCAN TO PAY</div>';
         html += '</div>';
 
         return html;

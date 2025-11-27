@@ -53,5 +53,40 @@
       "amount": 0.00
     }
   },
-  "total": 1040.00
+  "total": 1040.00,
+  "calculation_steps": [
+    {
+      "operator": "x",
+      "operand": "99,99,999.90"
+    },
+    {
+      "operator": "x",
+      "operand": "2.00"
+    },
+    {
+      "operator": "+",
+      "operand": "99,99,999.90"
+    },
+    {
+      "operator": "x",
+      "operand": "3.00"
+    },
+    {
+      "operator": "+",
+      "operand": "99,99,999.90"
+    },
+    {
+      "operator": "x",
+      "operand": "1.00"
+    },
+    {
+      "operator": "-",
+      "operand": "50.00"
+    },
+    {
+      "operator": "=",
+      "operand": "₹1,040.00",
+      "isFinal": true
+    }
+  ]
 }

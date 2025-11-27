@@ -1,6 +1,6 @@
 {
   "receipt_template": {
-    "characterWidth": 32,
+    "characterWidth": 48,
     "elements": [
       {
         "height": 90,
@@ -47,14 +47,12 @@
         "type": "transaction_payment_row"
       },
       {
-        "type": "item_header_row"
+        "alignment": "RIGHT",
+        "font_size": "NORMAL",
+        "type": "transaction_calculation_v2"
       },
       {
-        "source": "items",
-        "type": "bill_items"
-      },
-      {
-        "type": "total_amount_row"
+        "type": "total_amount_row_simple"
       },
       {
         "alignment": "CENTER",
@@ -87,7 +85,7 @@
         "type": "cut_paper"
       }
     ],
-    "paperWidth": 58
+    "paperWidth": 80
   }
 }
 

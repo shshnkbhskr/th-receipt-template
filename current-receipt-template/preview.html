@@ -99,6 +99,16 @@
                     <select id="template-type-select" class="control-select">
                         <option value="bill">Bill</option>
                         <option value="transaction" selected>Transaction</option>
+                        <option value="transaction_v2">Transaction V2</option>
+                    </select>
+                </div>
+                <div class="control-section">
+                    <label class="control-label">Payment Mode:</label>
+                    <select id="payment-mode-select" class="control-select" onchange="changePaymentMode(this.value)">
+                        <option value="Cash">Cash</option>
+                        <option value="UPI" selected>UPI</option>
+                        <option value="Due">Due</option>
+                        <option value="Card">Card</option>
                     </select>
                 </div>
                 <div class="control-section">
@@ -129,6 +139,27 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <div class="control-section toggle-section" id="decimals-control" style="display: none;">
+                    <label class="control-label">Show Decimals:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="decimals-toggle" checked onchange="toggleDecimals(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-section toggle-section">
+                    <label class="control-label">GSTIN:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="gstin-toggle" checked onchange="toggleGSTIN(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-section toggle-section" id="serial-no-control" style="display: none;">
+                    <label class="control-label">Serial No:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="serial-no-toggle" checked onchange="toggleSerialNo(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
         <div class="preview-container" id="preview-container">
@@ -147,12 +178,23 @@
         let showLogo = true; // Show or hide logo placeholder
         let showCashier = true; // Show or hide cashier field
         let originalCashierValue = null; // Store original cashier value
+        let showDecimals = true; // Show or hide decimal digits for Bill template
+        let showGSTIN = true; // Show or hide GSTIN field and tax fields
+        let showSerialNo = true; // Show or hide serial number column for Bill template
+        let currentPaymentMode = 'UPI'; // Current payment mode (Cash, UPI, Due, Card)
 
         /**
          * Get template path based on current type and format
          */
         function getTemplatePath() {
-            const type = currentTemplateType === 'bill' ? 'bill' : 'transaction';
+            let type;
+            if (currentTemplateType === 'bill') {
+                type = 'bill';
+            } else if (currentTemplateType === 'transaction_v2') {
+                type = 'transaction_v2';
+            } else {
+                type = 'transaction';
+            }
             const format = currentFormat === '2inch' ? '2inch' : '3inch';
             return `templates/print_${type}_${format}_template.json`;
         }
@@ -226,6 +268,85 @@
             loadPreview();
         }
 
+        /**
+         * Toggle decimal digits visibility for Bill template
+         */
+        function toggleDecimals(show) {
+            if (show === showDecimals) return;
+            
+            showDecimals = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Toggle GSTIN field visibility
+         * When GSTIN is hidden, tax fields (CGST/SGST/IGST) are also hidden
+         */
+        function toggleGSTIN(show) {
+            if (show === showGSTIN) return;
+            
+            showGSTIN = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Toggle serial number column visibility for Bill template
+         */
+        function toggleSerialNo(show) {
+            if (show === showSerialNo) return;
+            
+            showSerialNo = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Change payment mode
+         */
+        function changePaymentMode(mode) {
+            if (mode === currentPaymentMode) return;
+            
+            currentPaymentMode = mode;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Format currency with optional decimals
+         */
+        function formatCurrencyWithDecimals(value) {
+            if (typeof value !== 'number') value = parseFloat(value) || 0;
+            if (showDecimals) {
+                return '₹' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            } else {
+                return '₹' + Math.round(value).toLocaleString('en-IN');
+            }
+        }
+
+        /**
+         * Format number without currency symbol, with optional decimals
+         */
+        function formatNumberLimitedWithDecimals(value, maxLength) {
+            if (typeof value !== 'number') value = parseFloat(value) || 0;
+            let formatted;
+            if (showDecimals) {
+                formatted = value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            } else {
+                formatted = Math.round(value).toLocaleString('en-IN');
+            }
+            // Truncate if exceeds max length
+            if (formatted.length > maxLength) {
+                return formatted.substring(0, maxLength);
+            }
+            return formatted;
+        }
+
         async function loadPreview() {
             const previewContent = document.getElementById('preview-content');
             const selectedTemplate = getTemplatePath();
@@ -284,25 +405,34 @@
                     }
                 }
                 
-                // Filter tax data based on selected tax type
+                // Filter tax data based on selected tax type and GSTIN visibility
                 if (sampleData.tax) {
                     const taxData = { ...sampleData.tax };
-                    if (currentTaxType === 'cgst-sgst') {
-                        // Show CGST/SGST, hide IGST
-                        taxData.igst = { rate: taxData.igst?.rate || 0, amount: 0 };
-                    } else {
-                        // Show IGST, calculate amount from CGST + SGST if IGST amount is 0
-                        const cgstAmount = taxData.cgst?.amount || 0;
-                        const sgstAmount = taxData.sgst?.amount || 0;
-                        const igstAmount = taxData.igst?.amount || 0;
-                        
-                        // If IGST amount is 0, calculate it from CGST + SGST
-                        const calculatedIgstAmount = igstAmount > 0 ? igstAmount : (cgstAmount + sgstAmount);
-                        const igstRate = taxData.igst?.rate || ((taxData.cgst?.rate || 0) + (taxData.sgst?.rate || 0));
-                        
-                        taxData.igst = { rate: igstRate, amount: calculatedIgstAmount };
+                    
+                    // If GSTIN is hidden, hide all tax fields
+                    if (!showGSTIN) {
                         taxData.cgst = { rate: taxData.cgst?.rate || 0, amount: 0 };
                         taxData.sgst = { rate: taxData.sgst?.rate || 0, amount: 0 };
+                        taxData.igst = { rate: taxData.igst?.rate || 0, amount: 0 };
+                    } else {
+                        // Apply tax type filtering only if GSTIN is visible
+                        if (currentTaxType === 'cgst-sgst') {
+                            // Show CGST/SGST, hide IGST
+                            taxData.igst = { rate: taxData.igst?.rate || 0, amount: 0 };
+                        } else {
+                            // Show IGST, calculate amount from CGST + SGST if IGST amount is 0
+                            const cgstAmount = taxData.cgst?.amount || 0;
+                            const sgstAmount = taxData.sgst?.amount || 0;
+                            const igstAmount = taxData.igst?.amount || 0;
+                            
+                            // If IGST amount is 0, calculate it from CGST + SGST
+                            const calculatedIgstAmount = igstAmount > 0 ? igstAmount : (cgstAmount + sgstAmount);
+                            const igstRate = taxData.igst?.rate || ((taxData.cgst?.rate || 0) + (taxData.sgst?.rate || 0));
+                            
+                            taxData.igst = { rate: igstRate, amount: calculatedIgstAmount };
+                            taxData.cgst = { rate: taxData.cgst?.rate || 0, amount: 0 };
+                            taxData.sgst = { rate: taxData.sgst?.rate || 0, amount: 0 };
+                        }
                     }
                     sampleData.tax = taxData;
                 }
@@ -321,6 +451,9 @@
                     }
                 }
                 
+                // Update payment type based on selected payment mode
+                sampleData.payment_type = currentPaymentMode;
+                
                 // Filter template elements based on logo visibility
                 if (!showLogo && template.receipt_template && template.receipt_template.elements) {
                     // Create a copy of the template and filter out placeholder_block elements
@@ -335,6 +468,68 @@
                     };
                 }
                 
+                // Filter template elements based on GSTIN visibility
+                if (!showGSTIN && template.receipt_template && template.receipt_template.elements) {
+                    // Filter out GSTIN text elements (elements with value containing "GSTIN:")
+                    template = {
+                        ...template,
+                        receipt_template: {
+                            ...template.receipt_template,
+                            elements: template.receipt_template.elements.filter(
+                                element => {
+                                    if (element.type === 'text' && element.value) {
+                                        return !element.value.includes('GSTIN:');
+                                    }
+                                    return true;
+                                }
+                            )
+                        }
+                    };
+                }
+                
+                // Filter out newline elements, QR code and "SCAN TO PAY" elements based on payment mode
+                // QR code should only be visible for "Due" payment mode
+                if (template.receipt_template && template.receipt_template.elements) {
+                    const filteredElements = [];
+                    for (let i = 0; i < template.receipt_template.elements.length; i++) {
+                        const element = template.receipt_template.elements[i];
+                        const prevElement = i > 0 ? template.receipt_template.elements[i - 1] : null;
+                        
+                        // Skip newline elements
+                        if (element.type === 'newline') {
+                            continue; // Skip newline element
+                        }
+                        
+                        // Hide QR code if payment mode is Cash, UPI, or Card
+                        if (element.type === 'qr_code') {
+                            if (currentPaymentMode === 'Cash' || currentPaymentMode === 'UPI' || currentPaymentMode === 'Card') {
+                                continue; // Skip QR code element
+                            }
+                        }
+                        
+                        // Skip "SCAN TO PAY" static_text if it comes after qr_code or newline after qr_code
+                        // Also skip if QR code was hidden (payment mode is Cash/UPI/Card)
+                        if (element.type === 'static_text' && element.value === 'SCAN TO PAY') {
+                            if (currentPaymentMode === 'Cash' || currentPaymentMode === 'UPI' || currentPaymentMode === 'Card') {
+                                continue; // Skip "SCAN TO PAY" when QR code is hidden
+                            }
+                            if (prevElement && (prevElement.type === 'qr_code' || 
+                                (prevElement.type === 'newline' && i > 1 && template.receipt_template.elements[i - 2].type === 'qr_code'))) {
+                                continue; // Skip this element
+                            }
+                        }
+                        filteredElements.push(element);
+                    }
+                    
+                    template = {
+                        ...template,
+                        receipt_template: {
+                            ...template.receipt_template,
+                            elements: filteredElements
+                        }
+                    };
+                }
+                
                 // Validate template
                 const validation = PrintTemplateEngine.validateTemplate(template);
                 if (!validation.valid) {
@@ -343,6 +538,72 @@
                 
                 // Render preview
                 let html = PrintTemplateEngine.renderPreview(template, sampleData);
+                
+                // For Bill template, apply formatting based on toggles
+                if (currentTemplateType === 'bill') {
+                    const receiptElement = document.createElement('div');
+                    receiptElement.innerHTML = html;
+                    
+                    // Apply decimal formatting if needed
+                    if (!showDecimals) {
+                        // Update item price and amount fields
+                        const priceElements = receiptElement.querySelectorAll('.item-price');
+                        const amountElements = receiptElement.querySelectorAll('.item-amount');
+                        
+                        priceElements.forEach(el => {
+                            const text = el.textContent.trim();
+                            const num = parseFloat(text.replace(/,/g, ''));
+                            if (!isNaN(num)) {
+                                el.textContent = Math.round(num).toLocaleString('en-IN');
+                            }
+                        });
+                        
+                        amountElements.forEach(el => {
+                            const text = el.textContent.trim();
+                            const num = parseFloat(text.replace(/,/g, ''));
+                            if (!isNaN(num)) {
+                                el.textContent = Math.round(num).toLocaleString('en-IN');
+                            }
+                        });
+                        
+                        // Update total row currency values
+                        const totalRows = receiptElement.querySelectorAll('.total-row span:last-child');
+                        totalRows.forEach(el => {
+                            const text = el.textContent.trim();
+                            // Match currency format ₹X,XXX.XX
+                            const currencyMatch = text.match(/₹([\d,]+)\.(\d{2})/);
+                            if (currencyMatch) {
+                                const num = parseFloat(currencyMatch[1].replace(/,/g, ''));
+                                if (!isNaN(num)) {
+                                    el.textContent = '₹' + Math.round(num).toLocaleString('en-IN');
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Hide serial number column if needed
+                    if (!showSerialNo) {
+                        // Hide serial number header
+                        const snoHeaders = receiptElement.querySelectorAll('.item-header-row .item-sno, .item-header .item-sno');
+                        snoHeaders.forEach(el => {
+                            el.style.display = 'none';
+                        });
+                        
+                        // Hide serial number cells in item rows
+                        const snoCells = receiptElement.querySelectorAll('.bill-item-row .item-sno');
+                        snoCells.forEach(el => {
+                            el.style.display = 'none';
+                        });
+                        
+                        // Adjust grid template columns to remove serial number column
+                        const itemTables = receiptElement.querySelectorAll('.item-table');
+                        itemTables.forEach(table => {
+                            table.style.gridTemplateColumns = '2fr 1fr 1.4fr 1fr'; // Remove 0.3fr for serial number
+                        });
+                    }
+                    
+                    html = receiptElement.innerHTML;
+                }
                 
                 // Wrap in format container
                 html = `<div class="preview-receipt" data-format="${currentFormat}">${html}</div>`;
@@ -371,8 +632,35 @@
             // Add event listener for template type changes
             document.getElementById('template-type-select').addEventListener('change', (e) => {
                 currentTemplateType = e.target.value;
+                // Show/hide decimals control based on template type
+                const decimalsControl = document.getElementById('decimals-control');
+                const serialNoControl = document.getElementById('serial-no-control');
+                if (currentTemplateType === 'bill') {
+                    decimalsControl.style.display = 'flex';
+                    serialNoControl.style.display = 'flex';
+                } else {
+                    decimalsControl.style.display = 'none';
+                    serialNoControl.style.display = 'none';
+                }
                 loadPreview();
             });
+            
+            // Initialize control visibility
+            const decimalsControl = document.getElementById('decimals-control');
+            const serialNoControl = document.getElementById('serial-no-control');
+            if (currentTemplateType === 'bill') {
+                decimalsControl.style.display = 'flex';
+                serialNoControl.style.display = 'flex';
+            } else {
+                decimalsControl.style.display = 'none';
+                serialNoControl.style.display = 'none';
+            }
+            
+            // Initialize payment mode selector
+            const paymentModeSelect = document.getElementById('payment-mode-select');
+            if (paymentModeSelect) {
+                paymentModeSelect.value = currentPaymentMode;
+            }
         });
 
         /**

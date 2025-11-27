@@ -111,7 +111,7 @@
 /* Receipt Element Styles */
 .receipt-text,
 .receipt-static-text {
-    margin: 4px 0;
+    margin: 12px 0;
     word-wrap: break-word;
 }
 
@@ -122,7 +122,6 @@
     gap: 2px;
     padding-top: 5px;
     padding-bottom: 5px;
-    border-top: 1px dashed #000;
     border-bottom: 1px dashed #000;
 }
 
@@ -169,18 +168,20 @@
 .receipt-bill-date-row {
     margin: 8px 0;
     font-size: 0.9em;
-}
-
-.customer-info {
-    margin: 8px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
     border-top: 1px dashed #000;
     border-bottom: 1px dashed #000;
     padding-top: 8px;
     padding-bottom: 8px;
-    font-size: 12.6px;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9em;
+}
+
+.customer-info .receipt-text {
+    margin: 0;
 }
 
 .receipt-bill-info {
@@ -209,6 +210,10 @@
 .receipt-transaction-payment-row {
     margin: 8px 0;
     font-size: 0.9em;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .receipt-transaction-info {
@@ -238,14 +243,57 @@
     text-align: right;
 }
 
+.receipt-transaction-calculation-v2 {
+    margin: 8px 0;
+    font-size: 0.9em;
+    text-align: right;
+}
+
+.calculation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-end;
+    margin: 8px 0;
+    width: 100%;
+}
+
+.calculation-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 78%;
+    padding: 2px 0;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.calculation-step-final {
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.calculation-operator {
+    text-align: left;
+    flex: 0 0 auto;
+    margin-right: 8px;
+}
+
+.calculation-operand {
+    text-align: right;
+    flex: 1 1 auto;
+}
+
 .calculation-items {
     display: flex;
     flex-direction: column;
     gap: 2px;
     align-items: flex-end;
     margin: 8px 0;
-    border-top: 1px dashed #000;
-    border-bottom: 1px dashed #000;
     width: 100%;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -287,26 +335,25 @@
 .receipt-item-header-row {
     margin: 8px 0;
     font-weight: bold;
-    
     padding-bottom: 4px;
 }
 
-.item-header {
+.item-table {
     display: grid;
     grid-template-columns: 0.3fr 2fr 1fr 1.4fr 1fr;
     gap: 4px;
+    width: 100%;
+}
+
+.item-header-row {
+    display: contents;
     font-size: 0.9em;
+    font-weight: bold;
 }
 
-.item-header .item-qty {
-    text-align: right;
-}
-
-.item-header .item-price {
-    text-align: right;
-}
-
-.item-header .item-amount {
+.item-header-row > .item-qty,
+.item-header-row > .item-price,
+.item-header-row > .item-amount {
     text-align: right;
 }
 
@@ -315,10 +362,7 @@
 }
 
 .bill-item-row {
-    display: grid;
-    grid-template-columns: 0.3fr 2fr 1fr 1.4fr 1fr;
-    gap: 4px;
-    margin: 4px 0;
+    display: contents;
     font-size: 0.9em;
     padding: 2px 0;
 }

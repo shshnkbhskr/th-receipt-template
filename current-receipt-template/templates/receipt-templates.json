@@ -83,7 +83,7 @@
             "font_size": "SMALL",
             "font_weight": "NORMAL",
             "type": "static_text",
-            "value": "Powered by Tohands Smart Calculator"
+            "value": "Powered by Tohands"
           },
           {
             "type": "cut_paper"
@@ -173,7 +173,7 @@
             "font_size": "SMALL",
             "font_weight": "NORMAL",
             "type": "static_text",
-            "value": "Powered by Tohands Smart Calculator"
+            "value": "Powered by Tohands"
           },
           {
             "type": "cut_paper"
@@ -265,7 +265,7 @@
             "font_size": "SMALL",
             "font_weight": "NORMAL",
             "type": "static_text",
-            "value": "Powered by Tohands Smart Calculator"
+            "value": "Powered by Tohands"
           },
           {
             "type": "cut_paper"
@@ -355,7 +355,7 @@
             "font_size": "SMALL",
             "font_weight": "NORMAL",
             "type": "static_text",
-            "value": "Powered by Tohands Smart Calculator"
+            "value": "Powered by Tohands"
           },
           {
             "type": "cut_paper"
