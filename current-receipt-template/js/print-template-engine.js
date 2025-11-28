@@ -137,18 +137,24 @@ const PrintTemplateEngine = (() => {
     }
 
     /**
-     * Format time from ISO string to readable format
+     * Format time from ISO string to readable format (12-hour format with AM/PM)
      */
     function formatTime(dateString) {
         if (!dateString) return '';
         try {
             const date = new Date(dateString);
-            return date.toLocaleTimeString('en-IN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const seconds = date.getSeconds();
+            
+            // Convert to 12-hour format
+            const hours12 = hours % 12 || 12;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            // Format as HH:MM:SS AM/PM
+            const formattedTime = `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${ampm}`;
+            
+            return formattedTime;
         } catch (_e) {
             return dateString;
         }
@@ -556,7 +562,7 @@ const PrintTemplateEngine = (() => {
         const totalItems = items.length;
 
         let html = '<div class="receipt-total-qty-items-row">';
-        html += `<div class="total-row"><span>Total Qty: ${totalQty}</span><span>Total Items: ${totalItems}</span></div>`;
+        html += `<div class="total-row"><span>Total Items: ${totalItems}</span><span>Total Qty: ${totalQty}</span></div>`;
         html += '</div>';
 
         return html;

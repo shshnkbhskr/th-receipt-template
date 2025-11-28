@@ -503,6 +503,31 @@
     overflow-y: auto;
 }
 
+/* Light mode scrollbar styles */
+.side-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.side-panel::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.side-panel::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.side-panel::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Firefox scrollbar */
+.side-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
 .side-panel.collapsed {
     transform: translateX(-100%);
 }
@@ -736,6 +761,32 @@
     display: flex;
     justify-content: center;
     min-height: 100vh;
+    overflow-y: auto;
+}
+
+/* Light mode scrollbar styles for preview container */
+.preview-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.preview-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.preview-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 5px;
+}
+
+.preview-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Firefox scrollbar for preview container */
+.preview-container {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
 /* Responsive adjustments for side panel */
