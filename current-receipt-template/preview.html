@@ -191,6 +191,13 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <div class="control-section toggle-section">
+                    <label class="control-label">Customer Info:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="customer-info-toggle" checked onchange="toggleCustomerInfo(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
                 <div class="control-section">
                     <label class="control-label">Discount:</label>
                     <div class="format-switcher">
@@ -221,7 +228,7 @@
         </div>
     </div>
 
-    <script src="js/print-template-engine.js"></script>
+    <script src="js/print-template-engine.js?v=2"></script>
     <script>
         // Track current template type and format
         let currentTemplateType = 'transaction'; // 'bill' or 'transaction'
@@ -236,6 +243,7 @@
         let currentPaymentMode = 'UPI'; // Current payment mode (Cash, UPI, Due, Card)
         let discountAsPercentage = true; // Show discount as percentage (true) or currency (false) - default to percentage mode
         let showTotalQtyItems = true; // Show or hide total qty/items row for Bill and Transaction templates
+        let showCustomerInfo = true; // Show or hide customer info block (Customer name and Mobile No)
         let isInitialLoad = true; // Track if this is the first load
 
         /**
@@ -380,6 +388,20 @@
             if (show === showTotalQtyItems) return;
             
             showTotalQtyItems = show;
+            
+            // Reload preview automatically
+            loadPreview();
+        }
+
+        /**
+         * Toggle customer info block visibility
+         * When ON: Customer name and Mobile No are shown (customer is identified from mobile app)
+         * When OFF: Customer info block is hidden (customer not identified)
+         */
+        function toggleCustomerInfo(show) {
+            if (show === showCustomerInfo) return;
+            
+            showCustomerInfo = show;
             
             // Reload preview automatically
             loadPreview();
@@ -584,6 +606,20 @@
                                     }
                                     return true;
                                 }
+                            )
+                        }
+                    };
+                }
+                
+                // Filter template elements based on Customer Info visibility
+                if (!showCustomerInfo && template.receipt_template && template.receipt_template.elements) {
+                    // Filter out customer_info_row elements when customer is not identified
+                    template = {
+                        ...template,
+                        receipt_template: {
+                            ...template.receipt_template,
+                            elements: template.receipt_template.elements.filter(
+                                element => element.type !== 'customer_info_row'
                             )
                         }
                     };

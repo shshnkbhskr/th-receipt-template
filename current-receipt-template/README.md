@@ -2,6 +2,25 @@
 
 A template engine for rendering receipt templates using the `${variable}` syntax format, compatible with thermal printer receipt templates.
 
+## ⚠️ Important: Preview Prototype
+
+**This is a preview/demonstration tool, not an interactive application.**
+
+The preview page (`preview.html`) is designed to show how receipts will look when printed under various conditions. It does **not** respond to user data input—instead, it uses sample data and control panel settings to demonstrate different receipt layouts and configurations.
+
+**Purpose:**
+- Visualize receipt layouts before implementing on thermal printers
+- Test different template configurations (2-inch vs 3-inch, tax types, etc.)
+- Demonstrate conditional visibility (Customer Info, GSTIN, Logo, etc.)
+- Serve as a reference for mobile app developers implementing the actual print functionality
+
+**The control panel toggles simulate conditions that would be determined by the mobile app:**
+- **Customer Info**: ON when customer is identified via phone/ID in the mobile app
+- **GSTIN**: ON when the business has registered GST
+- **Cashier**: ON when cashier is assigned to the transaction
+- **Logo**: ON when business has uploaded a logo
+- etc.
+
 ## Directory Structure
 
 ```

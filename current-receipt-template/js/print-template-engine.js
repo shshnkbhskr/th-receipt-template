@@ -492,8 +492,13 @@ const PrintTemplateEngine = (() => {
             const operand = step.operand || '';
 
             html += `<div class="calculation-step">`;
-            html += `<span class="calculation-operator">${escapeHtml(operator)}</span>`;
-            html += `<span class="calculation-operand">${escapeHtml(operand)}</span>`;
+            // First step doesn't show operator, only operand
+            if (index === 0) {
+                html += `<span class="calculation-operand">${escapeHtml(operand)}</span>`;
+            } else {
+                html += `<span class="calculation-operator">${escapeHtml(operator)}</span>`;
+                html += `<span class="calculation-operand">${escapeHtml(operand)}</span>`;
+            }
             html += '</div>';
         });
 
